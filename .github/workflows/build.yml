@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build Electron App
 
 on:
   push:
@@ -25,10 +25,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Create Release and Upload Asset
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
         with:
-          files: dist/*.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: FrozenPlayer-Windows-Setup
+          path: dist/*.exe
