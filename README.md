@@ -12,3 +12,4 @@ Notes
 
 - This scaffold uses devDependencies for electron and electron-builder.
 - Add app icons and signing certificates if you plan to publish installers.
+test
