@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Open Music Player</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Базовые тёмные цвета и акцент */
+    :root {
+      --bg: #0b1020;
+      --panel: #0f1724;
+      --muted: #9aa4b2;
+      --accent: #7c3aed; /* фиолет/индиго */
+    }
+
+    body { background: var(--bg); color: #e6eef8; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+    .card:hover { transform: translateY(-4px) scale(1.01); }
+    .card { transition: transform .12s ease, box-shadow .12s ease; }
+  </style>
+
+  <!-- Lucide icons -->
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.276.0/dist/lucide.min.js"></script>
+</head>
+<body class="h-screen flex flex-col">
+
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-[var(--panel)] p-6 flex flex-col gap-6">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-[var(--accent)] to-pink-500 rounded-md flex items-center justify-center text-white font-bold">OM</div>
+        <div>
+          <h1 class="text-lg font-semibold">Open Music Player</h1>
+          <p class="text-sm text-[var(--muted)]">Desktop • Electron</p>
+        </div>
+      </div>
+
+      <nav class="flex flex-col gap-2">
+        <button class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-[#111827]">
+          <i data-lucide="home" class="lucide-icon"></i>
+          <span>Главная</span>
+        </button>
+        <button class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-[#111827]">
+          <i data-lucide="search" class="lucide-icon"></i>
+          <span>Поиск</span>
+        </button>
+        <button class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-[#111827]">
+          <i data-lucide="library" class="lucide-icon"></i>
+          <span>Медиатека</span>
+        </button>
+      </nav>
+
+      <div class="mt-auto text-[var(--muted)] text-sm">
+        © 2026 qwisixe
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 p-8 overflow-auto">
+      <header class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold">Рекомендации</h2>
+        <div class="text-sm text-[var(--muted)]">Твоя персональная подборка</div>
+      </header>
+
+      <section class="grid grid-cols-3 gap-6">
+        <!-- Пример карточек треков -->
+        <template id="track-template">
+          <div class="card bg-[#071022] rounded-xl p-4 flex flex-col gap-4">
+            <img class="w-full h-40 rounded-md object-cover" src="" alt="cover" />
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="font-semibold track-title"></div>
+                <div class="text-xs text-[var(--muted)] track-artist"></div>
+              </div>
+              <button class="play-btn bg-[var(--accent)] hover:brightness-105 p-2 rounded-full" title="Play">
+                <i data-lucide="play" class="lucide-icon text-white"></i>
+              </button>
+            </div>
+          </div>
+        </template>
+      </section>
+    </main>
+  </div>
+
+  <!-- Footer / Player controls -->
+  <footer class="h-24 bg-[#07101b] border-t border-[#0f1724] px-6 flex items-center gap-6">
+    <div class="flex items-center gap-4 w-1/3">
+      <img id="now-cover" src="https://via.placeholder.com/60" class="w-14 h-14 rounded-md object-cover" alt="cover" />
+      <div>
+        <div id="now-title" class="font-semibold">Нет трека</div>
+        <div id="now-artist" class="text-xs text-[var(--muted)]">Остановлено</div>
+      </div>
+    </div>
+
+    <div class="flex-1 flex flex-col items-center">
+      <div class="flex items-center gap-4">
+        <button id="prev" class="p-2 rounded-full hover:bg-[#0b1220]"><i data-lucide="chevrons-left" class="lucide-icon"></i></button>
+        <button id="play" class="p-3 rounded-full bg-[var(--accent)] text-white"><i data-lucide="play" class="lucide-icon"></i></button>
+        <button id="next" class="p-2 rounded-full hover:bg-[#0b1220]"><i data-lucide="chevrons-right" class="lucide-icon"></i></button>
+      </div>
+      <div class="w-2/3 mt-3 text-[var(--muted)] text-sm">Используется встроенный HTML5 audio</div>
+    </div>
+
+    <div class="w-1/3 flex justify-end">
+      <audio id="player" controls src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+    </div>
+  </footer>
+
+  <script>
+    // Инициализация Lucide и иконок
+    lucide.createIcons();
+
+    // Пример данных (в реальном приложении будут подгружаться динамически)
+    const tracks = [
+      {
+        title: 'Sample Track 1',
+        artist: 'Artist A',
+        cover: 'https://picsum.photos/seed/track1/400/400',
+        src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+      },
+      {
+        title: 'Sample Track 2',
+        artist: 'Artist B',
+        cover: 'https://picsum.photos/seed/track2/400/400',
+        src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'
+      },
+      {
+        title: 'Sample Track 3',
+        artist: 'Artist C',
+        cover: 'https://picsum.photos/seed/track3/400/400',
+        src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
+      },
+      {
+        title: 'Sample Track 4',
+        artist: 'Artist D',
+        cover: 'https://picsum.photos/seed/track4/400/400',
+        src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+      },
+      {
+        title: 'Sample Track 5',
+        artist: 'Artist E',
+        cover: 'https://picsum.photos/seed/track5/400/400',
+        src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'
+      },
+      {
+        title: 'Sample Track 6',
+        artist: 'Artist F',
+        cover: 'https://picsum.photos/seed/track6/400/400',
+        src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
+      }
+    ];
+
+    const grid = document.querySelector('section.grid');
+    const template = document.getElementById('track-template');
+
+    tracks.forEach((t, idx) => {
+      const clone = template.content.cloneNode(true);
+      clone.querySelector('img').src = t.cover;
+      clone.querySelector('.track-title').textContent = t.title;
+      clone.querySelector('.track-artist').textContent = t.artist;
+      const playBtn = clone.querySelector('.play-btn');
+      playBtn.addEventListener('click', () => {
+        setNowPlaying(t);
+        playAudio(t.src);
+      });
+      grid.appendChild(clone);
+    });
+
+    const player = document.getElementById('player');
+    const nowTitle = document.getElementById('now-title');
+    const nowArtist = document.getElementById('now-artist');
+    const nowCover = document.getElementById('now-cover');
+    const playControl = document.getElementById('play');
+
+    function setNowPlaying(track) {
+      nowTitle.textContent = track.title;
+      nowArtist.textContent = track.artist;
+      nowCover.src = track.cover;
+      player.src = track.src;
+    }
+
+    function playAudio(src) {
+      if (player.src !== src) player.src = src;
+      player.play();
+    }
+
+    // Footer play button toggles
+    playControl.addEventListener('click', () => {
+      if (player.paused) {
+        player.play();
+      } else {
+        player.pause();
+      }
+      updatePlayIcon();
+    });
+
+    player.addEventListener('play', updatePlayIcon);
+    player.addEventListener('pause', updatePlayIcon);
+    function updatePlayIcon() {
+      playControl.innerHTML = '';
+      const iconName = player.paused ? 'play' : 'pause';
+      const svg = lucide.icons[iconName].toSvg({width: 18, height: 18});
+      playControl.insertAdjacentHTML('beforeend', svg);
+    }
+
+    // Инициализация иконки
+    updatePlayIcon();
+  </script>
+</body>
+</html>
