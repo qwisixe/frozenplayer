@@ -3,120 +3,37 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Open Music Player</title>
-
-  <!-- Tailwind CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    /* Базовые тёмные цвета и акцент */
-    :root {
-      --bg: #0b1020;
-      --panel: #0f1724;
-      --muted: #9aa4b2;
-      --accent: #7c3aed; /* фиолет/индиго */
-    }
-
-    body { background: var(--bg); color: #e6eef8; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
-    .card:hover { transform: translateY(-4px) scale(1.01); }
-    .card { transition: transform .12s ease, box-shadow .12s ease; }
-  </style>
-
-  <!-- Lucide icons -->
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.276.0/dist/lucide.min.js"></script>
+  <title>Frozen Player — Playlist + Search</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="h-screen flex flex-col">
-
-  <div class="flex flex-1 overflow-hidden">
-    <!-- Sidebar -->
-    <aside class="w-64 bg-[var(--panel)] p-6 flex flex-col gap-6">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-gradient-to-br from-[var(--accent)] to-pink-500 rounded-md flex items-center justify-center text-white font-bold">OM</div>
-        <div>
-          <h1 class="text-lg font-semibold">Open Music Player</h1>
-          <p class="text-sm text-[var(--muted)]">Desktop • Electron</p>
+<body>
+  <div class="player-wrapper">
+    <div class="player-left">
+      <div class="now-playing">
+        <img id="now-cover" src="" alt="cover" />
+        <div class="now-meta">
+          <div id="now-title">—</div>
+          <div id="now-artist">—</div>
         </div>
       </div>
 
-      <nav class="flex flex-col gap-2">
-        <button class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-[#111827]">
-          <i data-lucide="home" class="lucide-icon"></i>
-          <span>Главная</span>
-        </button>
-        <button class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-[#111827]">
-          <i data-lucide="search" class="lucide-icon"></i>
-          <span>Поиск</span>
-        </button>
-        <button class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-[#111827]">
-          <i data-lucide="library" class="lucide-icon"></i>
-          <span>Медиатека</span>
-        </button>
-      </nav>
-
-      <div class="mt-auto text-[var(--muted)] text-sm">
-        © 2026 qwisixe
+      <div class="controls">
+        <button id="prev">⏮</button>
+        <button id="play">▶️</button>
+        <button id="next">⏭</button>
       </div>
-    </aside>
 
-    <!-- Main content -->
-    <main class="flex-1 p-8 overflow-auto">
-      <header class="flex items-center justify-between mb-6">
-        <div>
-          <h2 class="text-2xl font-bold">Поиск музыки</h2>
-          <div class="text-sm text-[var(--muted)]">Введите название трека или исполнителя</div>
-        </div>
+      <input id="search" placeholder="Поиск по трекам или артистам..." />
+      <ul id="playlist"></ul>
+    </div>
 
-        <!-- Search input -->
-        <div class="w-1/3">
-          <input id="search-input" type="search" placeholder="Искать треки или исполнителей..." class="w-full px-4 py-2 rounded-md bg-[#0b1220] border border-[#1f2937] focus:outline-none" />
-        </div>
-      </header>
-
-      <section id="search-results" class="grid grid-cols-3 gap-6">
-        <!-- Результаты поиска будут добавляться здесь -->
-      </section>
-
-      <!-- Шаблон карточки трека -->
-      <template id="track-template">
-        <div class="card bg-[#071022] rounded-xl p-4 flex flex-col gap-4">
-          <img class="w-full h-40 rounded-md object-cover" src="" alt="cover" />
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="font-semibold track-title"></div>
-              <div class="text-xs text-[var(--muted)] track-artist"></div>
-            </div>
-            <button class="play-btn bg-[var(--accent)] hover:brightness-105 p-2 rounded-full" title="Play">
-              <i data-lucide="play" class="lucide-icon text-white"></i>
-            </button>
-          </div>
-        </div>
-      </template>
-    </main>
+    <div class="player-right">
+      <h3>Demo Playlist</h3>
+      <p>Треки можно заменить на загрузку из API (см. player.js — section: API mode).</p>
+    </div>
   </div>
 
-  <!-- Footer / Player controls -->
-  <footer class="h-24 bg-[#07101b] border-t border-[#0f1724] px-6 flex items-center gap-6">
-    <div class="flex items-center gap-4 w-1/3">
-      <img id="now-cover" src="https://via.placeholder.com/60" class="w-14 h-14 rounded-md object-cover" alt="cover" />
-      <div>
-        <div id="now-title" class="font-semibold">Нет трека</div>
-        <div id="now-artist" class="text-xs text-[var(--muted)]">Остановлено</div>
-      </div>
-    </div>
-
-    <div class="flex-1 flex flex-col items-center">
-      <div class="flex items-center gap-4">
-        <button id="prev" class="p-2 rounded-full hover:bg-[#0b1220]"><i data-lucide="chevrons-left" class="lucide-icon"></i></button>
-        <button id="play" class="p-3 rounded-full bg-[var(--accent)] text-white"><i data-lucide="play" class="lucide-icon"></i></button>
-        <button id="next" class="p-2 rounded-full hover:bg-[#0b1220]"><i data-lucide="chevrons-right" class="lucide-icon"></i></button>
-      </div>
-      <div class="w-2/3 mt-3 text-[var(--muted)] text-sm">Используется встроенный HTML5 audio</div>
-    </div>
-
-    <div class="w-1/3 flex justify-end">
-      <audio id="player" controls></audio>
-    </div>
-  </footer>
-
-  <script src="renderer.js"></script>
+  <audio id="audio" preload="metadata"></audio>
+  <script src="player.js"></script>
 </body>
 </html>
