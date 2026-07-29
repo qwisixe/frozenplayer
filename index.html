@@ -60,27 +60,36 @@
     <!-- Main content -->
     <main class="flex-1 p-8 overflow-auto">
       <header class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold">Рекомендации</h2>
-        <div class="text-sm text-[var(--muted)]">Твоя персональная подборка</div>
+        <div>
+          <h2 class="text-2xl font-bold">Поиск музыки</h2>
+          <div class="text-sm text-[var(--muted)]">Введите название трека или исполнителя</div>
+        </div>
+
+        <!-- Search input -->
+        <div class="w-1/3">
+          <input id="search-input" type="search" placeholder="Искать треки или исполнителей..." class="w-full px-4 py-2 rounded-md bg-[#0b1220] border border-[#1f2937] focus:outline-none" />
+        </div>
       </header>
 
-      <section class="grid grid-cols-3 gap-6">
-        <!-- Пример карточек треков -->
-        <template id="track-template">
-          <div class="card bg-[#071022] rounded-xl p-4 flex flex-col gap-4">
-            <img class="w-full h-40 rounded-md object-cover" src="" alt="cover" />
-            <div class="flex items-center justify-between">
-              <div>
-                <div class="font-semibold track-title"></div>
-                <div class="text-xs text-[var(--muted)] track-artist"></div>
-              </div>
-              <button class="play-btn bg-[var(--accent)] hover:brightness-105 p-2 rounded-full" title="Play">
-                <i data-lucide="play" class="lucide-icon text-white"></i>
-              </button>
-            </div>
-          </div>
-        </template>
+      <section id="search-results" class="grid grid-cols-3 gap-6">
+        <!-- Результаты поиска будут добавляться здесь -->
       </section>
+
+      <!-- Шаблон карточки трека -->
+      <template id="track-template">
+        <div class="card bg-[#071022] rounded-xl p-4 flex flex-col gap-4">
+          <img class="w-full h-40 rounded-md object-cover" src="" alt="cover" />
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="font-semibold track-title"></div>
+              <div class="text-xs text-[var(--muted)] track-artist"></div>
+            </div>
+            <button class="play-btn bg-[var(--accent)] hover:brightness-105 p-2 rounded-full" title="Play">
+              <i data-lucide="play" class="lucide-icon text-white"></i>
+            </button>
+          </div>
+        </div>
+      </template>
     </main>
   </div>
 
@@ -104,109 +113,10 @@
     </div>
 
     <div class="w-1/3 flex justify-end">
-      <audio id="player" controls src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+      <audio id="player" controls></audio>
     </div>
   </footer>
 
-  <script>
-    // Инициализация Lucide и иконок
-    lucide.createIcons();
-
-    // Пример данных (в реальном приложении будут подгружаться динамически)
-    const tracks = [
-      {
-        title: 'Sample Track 1',
-        artist: 'Artist A',
-        cover: 'https://picsum.photos/seed/track1/400/400',
-        src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
-      },
-      {
-        title: 'Sample Track 2',
-        artist: 'Artist B',
-        cover: 'https://picsum.photos/seed/track2/400/400',
-        src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'
-      },
-      {
-        title: 'Sample Track 3',
-        artist: 'Artist C',
-        cover: 'https://picsum.photos/seed/track3/400/400',
-        src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
-      },
-      {
-        title: 'Sample Track 4',
-        artist: 'Artist D',
-        cover: 'https://picsum.photos/seed/track4/400/400',
-        src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
-      },
-      {
-        title: 'Sample Track 5',
-        artist: 'Artist E',
-        cover: 'https://picsum.photos/seed/track5/400/400',
-        src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'
-      },
-      {
-        title: 'Sample Track 6',
-        artist: 'Artist F',
-        cover: 'https://picsum.photos/seed/track6/400/400',
-        src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
-      }
-    ];
-
-    const grid = document.querySelector('section.grid');
-    const template = document.getElementById('track-template');
-
-    tracks.forEach((t, idx) => {
-      const clone = template.content.cloneNode(true);
-      clone.querySelector('img').src = t.cover;
-      clone.querySelector('.track-title').textContent = t.title;
-      clone.querySelector('.track-artist').textContent = t.artist;
-      const playBtn = clone.querySelector('.play-btn');
-      playBtn.addEventListener('click', () => {
-        setNowPlaying(t);
-        playAudio(t.src);
-      });
-      grid.appendChild(clone);
-    });
-
-    const player = document.getElementById('player');
-    const nowTitle = document.getElementById('now-title');
-    const nowArtist = document.getElementById('now-artist');
-    const nowCover = document.getElementById('now-cover');
-    const playControl = document.getElementById('play');
-
-    function setNowPlaying(track) {
-      nowTitle.textContent = track.title;
-      nowArtist.textContent = track.artist;
-      nowCover.src = track.cover;
-      player.src = track.src;
-    }
-
-    function playAudio(src) {
-      if (player.src !== src) player.src = src;
-      player.play();
-    }
-
-    // Footer play button toggles
-    playControl.addEventListener('click', () => {
-      if (player.paused) {
-        player.play();
-      } else {
-        player.pause();
-      }
-      updatePlayIcon();
-    });
-
-    player.addEventListener('play', updatePlayIcon);
-    player.addEventListener('pause', updatePlayIcon);
-    function updatePlayIcon() {
-      playControl.innerHTML = '';
-      const iconName = player.paused ? 'play' : 'pause';
-      const svg = lucide.icons[iconName].toSvg({width: 18, height: 18});
-      playControl.insertAdjacentHTML('beforeend', svg);
-    }
-
-    // Инициализация иконки
-    updatePlayIcon();
-  </script>
+  <script src="renderer.js"></script>
 </body>
 </html>
