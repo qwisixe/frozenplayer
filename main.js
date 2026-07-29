@@ -8,8 +8,8 @@ function createWindow() {
     backgroundColor: '#0b1020', // тёмный фон
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: true,
-      contextIsolation: false
+      nodeIntegration: false,
+      contextIsolation: true
     }
   });
 

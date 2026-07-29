@@ -1,8 +1,11 @@
 // renderer.js
 // Логика поиска и управления плеером (renderer process)
-// Использует iTunes Search API (публичный, не требует ключа) для примера.
+// Использует Jamendo API (если задан JAMENDO_CLIENT_ID через preload) или fallback на iTunes Search API.
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Read JAMENDO_CLIENT_ID from the secure preload-exposed object
+  const JAMENDO_CLIENT_ID = (window.env && window.env.JAMENDO_CLIENT_ID) ? window.env.JAMENDO_CLIENT_ID : '';
+
   const searchInput = document.getElementById('search-input');
   const resultsContainer = document.getElementById('search-results');
   const template = document.getElementById('track-template');
@@ -30,37 +33,69 @@ document.addEventListener('DOMContentLoaded', () => {
   async function search(term) {
     if (!term) {
       resultsContainer.innerHTML = '';
+      tracks = [];
+      currentIndex = -1;
       return;
     }
 
-    const q = encodeURIComponent(term);
-    // iTunes Search API: returns previewUrl for samples (30s) and artwork
-    const url = `https://itunes.apple.com/search?term=${q}&media=music&limit=25`;
+    resultsContainer.innerHTML = '<div class="col-span-3 text-[var(--muted)]">Поиск...</div>';
 
     try {
-      const res = await fetch(url);
-      const data = await res.json();
-      const items = data.results || [];
-
-      tracks = items
-        .filter(i => i.previewUrl) // только треки с preview
-        .map((i) => ({
-          title: i.trackName || i.collectionName || 'Unknown',
-          artist: i.artistName || 'Unknown',
-          cover: i.artworkUrl100 ? i.artworkUrl100.replace('100x100bb', '400x400bb') : 'https://via.placeholder.com/400',
-          src: i.previewUrl
-        }));
-
-      renderResults();
+      if (JAMENDO_CLIENT_ID) {
+        await searchJamendo(term);
+      } else {
+        await searchiTunes(term);
+      }
     } catch (err) {
       console.error('Search error', err);
       resultsContainer.innerHTML = '<div class="col-span-3 text-red-400">Ошибка поиска. Попробуйте ещё раз.</div>';
     }
   }
 
+  async function searchJamendo(term) {
+    // Jamendo API: https://developer.jamendo.com/v3.0
+    const q = encodeURIComponent(term);
+    const url = `https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_CLIENT_ID}&format=json&limit=30&namesearch=${q}&include=musicinfo`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+    const items = data.results || [];
+
+    tracks = items
+      .filter(i => i.audio) // require playable url
+      .map(i => ({
+        title: i.name || 'Unknown',
+        artist: i.artist_name || 'Unknown',
+        cover: i.album_image || 'https://via.placeholder.com/400',
+        src: i.audio // mp3 stream
+      }));
+
+    renderResults();
+  }
+
+  async function searchiTunes(term) {
+    const q = encodeURIComponent(term);
+    const url = `https://itunes.apple.com/search?term=${q}&media=music&limit=25`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+    const items = data.results || [];
+
+    tracks = items
+      .filter(i => i.previewUrl)
+      .map(i => ({
+        title: i.trackName || i.collectionName || 'Unknown',
+        artist: i.artistName || 'Unknown',
+        cover: i.artworkUrl100 ? i.artworkUrl100.replace('100x100bb', '400x400bb') : 'https://via.placeholder.com/400',
+        src: i.previewUrl
+      }));
+
+    renderResults();
+  }
+
   function renderResults() {
     resultsContainer.innerHTML = '';
-    if (tracks.length === 0) {
+    if (!tracks.length) {
       resultsContainer.innerHTML = '<div class="col-span-3 text-[var(--muted)]">Ничего не найдено.</div>';
       lucide.createIcons();
       return;
@@ -77,22 +112,19 @@ document.addEventListener('DOMContentLoaded', () => {
       titleEl.textContent = t.title;
       artistEl.textContent = t.artist;
 
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         playTrackAtIndex(idx);
       });
 
-      // Clicking on the card also plays
       const card = clone.querySelector('.card');
-      card.addEventListener('click', (e) => {
-        // prevent double trigger when clicking play button
-        if (e.target.closest('.play-btn')) return;
+      card.addEventListener('click', () => {
         playTrackAtIndex(idx);
       });
 
       resultsContainer.appendChild(clone);
     });
 
-    // Recreate icons for newly added elements
     lucide.createIcons();
   }
 
@@ -108,6 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
     nowTitle.textContent = track.title;
     nowArtist.textContent = track.artist;
     nowCover.src = track.cover;
+    // set audio src but don't auto-play here; playAudio will call play()
     player.src = track.src;
   }
 
@@ -116,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
     player.play().catch(err => console.warn('play failed', err));
   }
 
-  // Footer play/pause toggle
+  // Controls
   playControl.addEventListener('click', () => {
     if (player.paused) player.play();
     else player.pause();
@@ -124,13 +157,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   prevBtn.addEventListener('click', () => {
-    if (tracks.length === 0) return;
+    if (!tracks.length) return;
     currentIndex = (currentIndex <= 0) ? tracks.length - 1 : currentIndex - 1;
     playTrackAtIndex(currentIndex);
   });
 
   nextBtn.addEventListener('click', () => {
-    if (tracks.length === 0) return;
+    if (!tracks.length) return;
     currentIndex = (currentIndex + 1) % tracks.length;
     playTrackAtIndex(currentIndex);
   });
@@ -138,8 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
   player.addEventListener('play', updatePlayIcon);
   player.addEventListener('pause', updatePlayIcon);
   player.addEventListener('ended', () => {
-    // Автопереход к следующему треку при окончании
-    if (tracks.length === 0) return;
+    if (!tracks.length) return;
     currentIndex = (currentIndex + 1) % tracks.length;
     playTrackAtIndex(currentIndex);
   });
@@ -147,7 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function updatePlayIcon() {
     playControl.innerHTML = '';
     const iconName = player.paused ? 'play' : 'pause';
-    // safe check for lucide
     if (lucide && lucide.icons && lucide.icons[iconName]) {
       const svg = lucide.icons[iconName].toSvg({ width: 18, height: 18 });
       playControl.insertAdjacentHTML('beforeend', svg);
@@ -156,17 +187,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Debounced search on input
   const debouncedSearch = debounce((e) => search(e.target.value.trim()), 400);
   searchInput.addEventListener('input', debouncedSearch);
-
-  // Initial icons
-  lucide.createIcons();
-
-  // Optional: allow pressing Enter to search immediately
   searchInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      search(e.target.value.trim());
-    }
+    if (e.key === 'Enter') search(e.target.value.trim());
   });
+
+  // init icons
+  lucide.createIcons();
+  updatePlayIcon();
 });
