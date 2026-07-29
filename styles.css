@@ -1,0 +1,105 @@
+:root{
+  --bg: #0f1724;
+  --card: #111827;
+  --muted: #9ca3af;
+  --accent: #2dd4bf;
+  --accent-2: #60a5fa;
+  color-scheme: dark;
+}
+
+body{
+  margin:0;
+  font-family: Inter, Roboto, Arial, sans-serif;
+  background: linear-gradient(180deg,#041021 0%, #071427 100%);
+  color: #e6eef6;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+
+.player-wrapper{
+  display:flex;
+  gap:24px;
+  width:100%;
+  max-width:980px;
+  background:rgba(255,255,255,0.02);
+  border-radius:12px;
+  padding:20px;
+  box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+}
+
+.player-left{ flex:1; }
+.player-right{ width:280px; }
+
+.now-playing{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  margin-bottom:12px;
+  background:rgba(255,255,255,0.02);
+  padding:10px;
+  border-radius:8px;
+}
+
+.now-playing img{
+  width:80px;
+  height:80px;
+  border-radius:8px;
+  object-fit:cover;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));
+}
+
+.now-meta{ font-size:14px; }
+#now-title{ font-weight:600; }
+#now-artist{ color:var(--muted); font-size:12px; margin-top:6px; }
+
+.controls{ display:flex; gap:10px; margin-bottom:12px; }
+.controls button{
+  background:transparent;
+  border:1px solid rgba(255,255,255,0.06);
+  color:inherit;
+  padding:8px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:16px;
+}
+
+#search{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.04);
+  background:rgba(255,255,255,0.02);
+  color:inherit;
+  margin:10px 0 14px 0;
+}
+
+#playlist{
+  list-style:none;
+  padding:0;
+  margin:0;
+  max-height:360px;
+  overflow:auto;
+  border-radius:8px;
+}
+
+#playlist li{
+  display:flex;
+  gap:10px;
+  padding:10px;
+  align-items:center;
+  border-bottom:1px solid rgba(255,255,255,0.02);
+  cursor:pointer;
+}
+
+.track-cover{ width:48px; height:48px; border-radius:6px; object-fit:cover; }
+
+.track-meta{ flex:1; }
+.track-title{ font-weight:600; font-size:14px; }
+.track-artist{ font-size:12px; color:var(--muted); margin-top:6px; }
+
+.track-duration{ font-size:12px; color:var(--muted); }
+
+li.playing{ background: linear-gradient(90deg, rgba(45,212,191,0.06), rgba(96,165,250,0.03)); border-left:4px solid var(--accent); }
